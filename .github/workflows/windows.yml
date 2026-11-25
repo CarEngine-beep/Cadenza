@@ -23,20 +23,19 @@ jobs:
       - name: Set up Ninja
         uses: seanmiddleditch/gha-setup-ninja@v5
 
-      - name: Set up vcpkg
-        uses: microsoft/setup-vcpkg@v1
-
       - name: Install FluidSynth via vcpkg
         shell: pwsh
         run: |
-          vcpkg install fluidsynth:x64-windows
+          git clone --depth 1 https://github.com/microsoft/vcpkg.git C:\vcpkg-classic
+          & C:\vcpkg-classic\bootstrap-vcpkg.bat -disableMetrics
+          & C:\vcpkg-classic\vcpkg.exe install fluidsynth:x64-windows
 
       - name: Configure
         shell: pwsh
         run: |
           cmake -S . -B build-msvc -G Ninja `
             -DCMAKE_BUILD_TYPE=Release `
-            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+            -DCMAKE_TOOLCHAIN_FILE="C:\vcpkg-classic\scripts\buildsystems\vcpkg.cmake" `
             -DVCPKG_TARGET_TRIPLET=x64-windows
 
       - name: Build
@@ -68,7 +67,7 @@ jobs:
             }
 
           # Copy vcpkg runtime DLLs (FluidSynth and dependencies) next to the .exe
-          $vcpkgBin = "$env:VCPKG_ROOT\installed\x64-windows\bin"
+          $vcpkgBin = "C:\vcpkg-classic\installed\x64-windows\bin"
           if (Test-Path $vcpkgBin) {
             Copy-Item -Path "$vcpkgBin\*.dll" -Destination $outDir -Force
           }
